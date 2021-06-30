@@ -1,13 +1,11 @@
-/* global __dirname */
-/* global process */
-
 import express from "express";
 import  { createLogger, format, transports, } from "winston";
 import exphbs from "express-handlebars";
-import bodyParser from "body-parser";
 import methodOverride from "method-override";
 import browserSync  from "browser-sync";
 import path from "path";
+import axios from 'axios';
+require('dotenv').config();
 
 // init logger
 const logger = createLogger({
@@ -19,7 +17,7 @@ const logger = createLogger({
 });
 
 // Get Port
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 const ENV = process.env.APP_ENV || "dev";
 
 
@@ -31,8 +29,8 @@ app.engine("handlebars", exphbs({defaultLayout: "main",}));
 app.set("view engine", "handlebars");
 
 // body-parser
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true, }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true, }));
 
 // Method-Override
 app.use(methodOverride("_method"));
@@ -44,7 +42,22 @@ app.use(express.static(path.join(__dirname, "/public")));
 app.get("/", (req, res) => {
 	res.render("homepage", {greeting: "Hello",});
 });
-
+app.get("/account", (req,res)=>{
+	const config = {
+		  headers: {
+		'Authorization' :'Bearer ' + process.env.SB_BEARER
+	  }
+	}
+	axios.get("https://api.sparebank1.no/open/personal/banking/accounts/"+process.env.SB_ACCOUNTID+"/transactions", config)
+	  .then((result) => {
+		res.send(result.data)
+	 })
+	  .catch((err) => {
+	   console.log(err);   
+	  })
+	
+	
+});
 app.listen(PORT, () => logger.log("info", "Webservice startet on Port: %d", PORT));
 
 /** Test doku automation
